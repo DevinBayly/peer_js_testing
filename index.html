@@ -12,7 +12,8 @@
 <body>
     <button onclick="startServer()">server</button>
     <button onclick="startClient()">client</button>
-    <button onclick="getMedia()">call</button>
+    <button onclick="getMedia()">ServerInitiateCall</button>
+    <button onclick="clientCall()">ClientInitiateCall</button>
     <button onclick="sendData()">sendData</button>
     <video src=""></video>
     <script>
@@ -36,8 +37,13 @@
                 conn = con
                 conn.on("data", function (data) {
                     console.log("got data!", data)
+                    let dataj = JSON.parse(data)
+                    if (dataj.cmd === "startMedia") {
+                        sendMediaToPeer(dataj.pid)
+                    }
                 })
             })
+            
 
         }
         function startClient() {
@@ -68,6 +74,10 @@
 
 
         }
+        function clientCall() {
+            // instead make this a data transfer that tells the server which client to send video to
+            conn.send(JSON.stringify({cmd:"startMedia",pid:peer.id}))
+        }
         function sendData() {
             setInterval(() => {
                 conn.send(JSON.stringify({ numbers: Math.random() }))
@@ -80,7 +90,18 @@
                 // Do something with the video here.
             };
         }
-        function getMedia() {
+        function sendMediaToPeer(pid) {
+            navigator.getUserMedia = navigator.mozGetUserMedia || navigator.mediaDevices.getUserMedia
+            navigator.getUserMedia({ video: { width: 1280, height: 720 } },
+                function (stream) {
+
+                    peer.call(pid, stream)
+                },
+                function (err) {
+                    console.log("The following error occurred: " + err.name);
+                }
+            );
+        } function getMedia() {
             navigator.getUserMedia = navigator.mozGetUserMedia || navigator.mediaDevices.getUserMedia
             navigator.getUserMedia({ video: { width: 1280, height: 720 } },
                 function (stream) {
