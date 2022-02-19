@@ -12,7 +12,9 @@
 <body>
     <button onclick="startServer()">server</button>
     <button onclick="startClient()">client</button>
-    <button onclick="makeConnection()">Start</button>
+    <button onclick="getMedia()">call</button>
+    <button onclick="sendData()">sendData</button>
+    <video src=""></video>
     <script>
         var peer
         var conn
@@ -49,15 +51,48 @@
                 let p = document.createElement("p")
                 p.innerHTML = id
                 document.body.append(p)
+                conn = peer.connect("server")
+                console.log("connected to server")
 
             })
+            peer.on("call", function (call) {
+                call.answer()
+                call.on("stream", function (stream) {
+                    var video = document.querySelector('video');
+                    video.srcObject = stream;
+                    video.onloadedmetadata = function (e) {
+                        video.play();
+                    };
+                })
+            })
+
+
         }
-        function makeConnection() {
-            conn = peer.connect("server")
+        function sendData() {
             setInterval(() => {
                 conn.send(JSON.stringify({ numbers: Math.random() }))
             }, 1000)
         }
+        function attachStreamToVideo(stream) {
+            var video = document.querySelector('video');
+            video.srcObject = stream;
+            video.onloadedmetadata = function (e) {
+                // Do something with the video here.
+            };
+        }
+        function getMedia() {
+            navigator.getUserMedia = navigator.mozGetUserMedia || navigator.mediaDevices.getUserMedia
+            navigator.getUserMedia({ video: { width: 1280, height: 720 } },
+                function (stream) {
+
+                    peer.call(conn.peer, stream)
+                },
+                function (err) {
+                    console.log("The following error occurred: " + err.name);
+                }
+            );
+        }
+
         //every client knows the name of the server,
         // only one server
 
