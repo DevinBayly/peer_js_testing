@@ -236,15 +236,7 @@ function startChalk() {
   uploader = document.querySelector("#fileupload")
   uploader.addEventListener("input", e => {
     let file = e.target.files[0]
-    if (navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(function (stream) {
-          video.srcObject = stream;
-        })
-        .catch(function (err0r) {
-          console.log("Something went wrong!");
-        });
-    }
+    
     waitForVideo(loadImage,URL.createObjectURL(file))
 
   }
