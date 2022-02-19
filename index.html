@@ -19,12 +19,16 @@
     <script>
         var peer
         var conn
+      function dateString() {
+        let date = new Date()
+        
+        return `${date.getUTCFullYear()}${date.getUTCMonth()}${date.getUTCDate()}`
+      }
         function startServer() {
-            peer = new Peer("server", {
-                host: "192.168.2.105",
-                port: 9000,
-                path: "/myapp"
-            })
+//           var month = dateObj.getUTCMonth() + 1; //months from 1-12
+// var day = dateObj.getUTCDate();
+// var year = dateObj.getUTCFullYear();
+            peer = new Peer(`chalkserver`+dateString())
             peer.on("open", function (id) {
                 console.log("my id is", id)
                 let p = document.createElement("p")
@@ -47,17 +51,13 @@
 
         }
         function startClient() {
-            peer = new Peer(undefined, {
-                host: "192.168.2.105",
-                port: 9000,
-                path: "/myapp"
-            })
+            peer = new Peer(undefined)
             peer.on("open", function (id) {
                 console.log("my id is", id)
                 let p = document.createElement("p")
                 p.innerHTML = id
                 document.body.append(p)
-                conn = peer.connect("server")
+                conn = peer.connect("chalkserver"+dateString())
                 console.log("connected to server")
 
             })
