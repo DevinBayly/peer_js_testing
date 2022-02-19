@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <title>Document</title>
+</head>
+
+<body>
+    <button onclick="startServer()">server</button>
+    <button onclick="startClient()">client</button>
+    <button onclick="makeConnection()">Start</button>
+    <script>
+        var peer
+        var conn
+        function startServer() {
+            peer = new Peer("server", {
+                host: "192.168.2.105",
+                port: 9000,
+                path: "/myapp"
+            })
+            peer.on("open", function (id) {
+                console.log("my id is", id)
+                let p = document.createElement("p")
+                p.innerHTML = id
+                document.body.append(p)
+
+            })
+            peer.on("connection", function (con) {
+                console.log("just connected to!", con)
+                conn = con
+                conn.on("data", function (data) {
+                    console.log("got data!", data)
+                })
+            })
+
+        }
+        function startClient() {
+            peer = new Peer(undefined, {
+                host: "192.168.2.105",
+                port: 9000,
+                path: "/myapp"
+            })
+            peer.on("open", function (id) {
+                console.log("my id is", id)
+                let p = document.createElement("p")
+                p.innerHTML = id
+                document.body.append(p)
+
+            })
+        }
+        function makeConnection() {
+            conn = peer.connect("server")
+            setInterval(() => {
+                conn.send(JSON.stringify({ numbers: Math.random() }))
+            }, 1000)
+        }
+        //every client knows the name of the server,
+        // only one server
+
+    </script>
+</body>
+
+</html>
