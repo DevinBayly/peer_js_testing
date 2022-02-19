@@ -10,12 +10,27 @@
 </head>
 
 <body>
+      <video src=""></video>
+
+  <div class= "inputholder">
+      rotation
+      <input id="rotation" min="-360" max="360" type="range" value="0"/>
+    </div>
+    <div class ="inputholder">
+      scale
+      <input id="scale" min=".2" max="3" step=".01" type="range" value=".2"/>
+      <div id="scaleshow"></div>
+    </div>
+    <div class="inputholder">
+      alpha
+      <input id="alpha" min="0" max="1" step=".01" type="range" value="1"/>
+    </div>
+    <div><input id="fileupload" type="file"></div>
     <button onclick="startServer()">server</button>
     <button onclick="startClient()">client</button>
     <button onclick="getMedia()">ServerInitiateCall</button>
     <button onclick="clientCall()">ClientInitiateCall</button>
     <button onclick="sendData()">sendData</button>
-    <video src=""></video>
     <script>
         var peer
         var conn
@@ -68,6 +83,7 @@
                     video.srcObject = stream;
                     video.onloadedmetadata = function (e) {
                         video.play();
+                      startChalk()
                     };
                 })
             })
@@ -116,6 +132,150 @@
 
         //every client knows the name of the server,
         // only one server
+let c1, cx1, c2, cx2, im, video
+let scaleshow
+
+let transformation = {
+  scale: 1,
+  tx: 0,
+  ty: 0,
+  rotation: 0,
+  alpha: 1
+}
+let start = {}
+let last = { x: 0, y: 0 }
+let clicked = false
+function started(e) {
+  clicked = true
+  start.x = e.clientX
+  start.y = e.clientY
+  changed()
+}
+function touchStart(e) {
+  let firstTouch = e.touches[0]
+  started(firstTouch)
+
+}
+function touchMove(e) {
+  e.preventDefault()
+  let firstTouch = e.touches[0]
+  moved(firstTouch)
+}
+function touchEnd(e) {
+  ended()
+}
+let delta = {}
+function moved(e) {
+  // delta
+  if (clicked) {
+    delta.x = e.clientX - start.x
+    delta.y = e.clientY - start.y
+    transformation.tx = delta.x + last.x
+    transformation.ty = delta.y + last.y
+    changed()
+  }
+}
+function ended(e) {
+  last = { x: transformation.tx, y: transformation.ty }
+  clicked = false
+}
+
+function changed(e) {
+  // transformationss
+  cx2.clearRect(0, 0, c2.width, c2.height)
+  cx2.save()
+  if (e != undefined) {
+    transformation[e.target.id] = parseFloat(e.target.value)
+  }
+  cx2.globalAlpha = transformation.alpha
+  // tx,ty +,dwidth/2 and dheight/2
+  let rotationCenter = { x: transformation.tx + transformation.scale * c1.width / 2, y: transformation.ty + transformation.scale * c1.height / 2 }
+  //cx2.scale(transformation.scale,transformation.scale)
+  cx2.translate(rotationCenter.x, rotationCenter.y)
+  cx2.rotate((Math.PI / 180) * transformation.rotation)
+  cx2.translate(-rotationCenter.x, -rotationCenter.y)
+  cx2.drawImage(c1, 0, 0, c1.width, c1.height, transformation.tx, transformation.ty, c1.width * transformation.scale, c1.height * transformation.scale)
+  cx2.restore()
+  scaleshow.innerHTML = transformation.scale
+}
+let uploader
+function startChalk() {
+  scaleshow = document.querySelector("#scaleshow")
+  let waitForVideo = (f,src) => {
+    
+    // loop until the video is ready
+    setTimeout(() => {
+      let bb = video.getBoundingClientRect()
+      if (bb.width < 400) {
+        waitForVideo(f,src)
+      } else {
+        f(src)
+      }
+    }, 1000)
+  }
+
+  let loadImage = (src) => {
+    im.onload = () => {
+
+      let vbb = video.getBoundingClientRect()
+      c2.width = vbb.width
+      c2.height = vbb.height
+      c2.style.position = "absolute"
+      c2.style.top = `${vbb.top}px`
+      c2.style.left = `${vbb.left}px`
+      c1.width = im.width
+      c1.height = im.height
+      cx1.drawImage(im, 0, 0)
+      cx2.drawImage(c1, 0, 0,im.width,im.height)
+
+    }
+    im.src = src
+    document.body.append(c2)
+    changed()
+  }
+  uploader = document.querySelector("#fileupload")
+  uploader.addEventListener("input", e => {
+    let file = e.target.files[0]
+    if (navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(function (stream) {
+          video.srcObject = stream;
+        })
+        .catch(function (err0r) {
+          console.log("Something went wrong!");
+        });
+    }
+    waitForVideo(loadImage,URL.createObjectURL(file))
+
+  }
+  )
+  console.log("load")
+  c1 = document.createElement("canvas")
+  cx1 = c1.getContext("2d")
+  c2 = document.createElement("canvas")
+  cx2 = c2.getContext("2d")
+  cx2.save()
+  // 
+  let im = new Image()
+
+
+  let inputs = document.querySelectorAll("input")
+  for (let i of inputs) {
+    i.addEventListener("input", changed)
+  }
+  // click
+  c2.addEventListener("mousedown", started)
+  // move
+  c2.addEventListener("mousemove", moved)
+  // end
+  c2.addEventListener("mouseup", ended)
+
+  c2.addEventListener("touchstart", touchStart)
+  c2.addEventListener("touchmove", touchMove)
+  c2.addEventListener("touchend", touchEnd)
+  var video = document.querySelector("video");
+
+}
 
     </script>
 </body>
